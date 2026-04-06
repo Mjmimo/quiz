@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Choose Your Reward | Grade 8 Study Quiz Hub</title>
+    <link rel="stylesheet" href="assets/css/styles.css" />
+  </head>
+  <body>
+    <header class="subject-header">
+      <div class="container">
+        <a class="back-link" href="index.html">← Back to home</a>
+        <h1>Reward Selection</h1>
+        <p class="subtitle">Perfect score unlocked! Choose your reward.</p>
+      </div>
+    </header>
+
+    <main class="container">
+      <section id="reward-locked" class="quiz-result hidden">
+        <h2>Reward locked</h2>
+        <p>You need a perfect 4/4 score in a subject quiz to unlock rewards.</p>
+        <a class="btn" id="go-subject-btn" href="index.html">Go to subjects</a>
+      </section>
+
+      <section id="reward-unlocked" class="quiz-result hidden">
+        <h2>Choose one reward</h2>
+        <p class="live-score" id="reward-subject-text"></p>
+        <div class="reward-grid">
+          <button class="reward-option" data-code="A" data-reward="Brownie">A · Brownie</button>
+          <button class="reward-option" data-code="B" data-reward="Cookie">B · Cookie</button>
+          <button class="reward-option" data-code="C" data-reward="Donuts">C · Donuts</button>
+          <button class="reward-option" data-code="D" data-reward="Pancake">D · Pancake</button>
+        </div>
+      </section>
+    </main>
+
+    <script src="assets/js/reward.js"></script>
+  </body>
+</html>
