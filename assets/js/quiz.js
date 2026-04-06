@@ -19,6 +19,7 @@
   const finalScoreText = document.getElementById("final-score-text");
   const finalMessage = document.getElementById("final-message");
   const restartBtn = document.getElementById("restart-btn");
+  const rewardLink = document.getElementById("reward-link");
 
   let currentIndex = 0;
   let score = 0;
@@ -96,8 +97,25 @@
     resultSection.classList.remove("hidden");
 
     const percent = Math.round((score / questions.length) * 100);
+    const unlocked = score === questions.length;
+
     finalScoreText.textContent = `You scored ${score} out of ${questions.length} (${percent}%).`;
     finalMessage.textContent = getPerformanceMessage(percent);
+
+    if (rewardLink) {
+      rewardLink.classList.add("hidden");
+    }
+
+    if (unlocked) {
+      sessionStorage.setItem(`rewardUnlocked:${subjectKey}`, "true");
+      if (rewardLink) {
+        rewardLink.href = `../reward.html?subject=${encodeURIComponent(subjectKey)}`;
+        rewardLink.classList.remove("hidden");
+      }
+      finalMessage.textContent += " Perfect score! Reward unlocked.";
+    } else {
+      sessionStorage.removeItem(`rewardUnlocked:${subjectKey}`);
+    }
   }
 
   nextBtn.addEventListener("click", () => {
@@ -111,6 +129,9 @@
     scoreEl.textContent = "0";
     resultSection.classList.add("hidden");
     quizRoot.classList.remove("hidden");
+    if (rewardLink) {
+      rewardLink.classList.add("hidden");
+    }
     renderQuestion();
   });
 
