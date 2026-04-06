@@ -3,7 +3,7 @@
   const reward = params.get("reward");
   const subject = params.get("subject");
 
-  const validRewards = ["Brownie", "Cookie", "Pancake", "Donuts"];
+  const validRewards = ["Brownie", "Cookie", "Donuts"];
   const winMessage = document.getElementById("win-message");
   const winDetail = document.getElementById("win-detail");
 
@@ -20,6 +20,6 @@
     return;
   }
 
-  winMessage.textContent = `Congratulations! You won a ${reward} 🎉`;
-  winDetail.textContent = "Excellent work on your perfect quiz score!";
+  winMessage.textContent = "Congratulations";
+  winDetail.textContent = `You chose: ${reward}`;
 })();
