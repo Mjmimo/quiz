@@ -13,7 +13,6 @@ A complete educational website in English with interactive multiple-choice quizz
 ## Features
 
 - Subject menu from a central homepage
-- Random subject wheel on the homepage
 - One dedicated page per subject
 - Instant correction after every answer
 - Automatic score tracking during the quiz
