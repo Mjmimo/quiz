@@ -33,15 +33,7 @@ const uiTranslations = {
     resultRetry: "Good effort. Review and retry this topic to improve.",
     correct: "Correct! {explanation}",
     incorrect: "Not quite. {explanation}",
-    startFromLevel: "Start from this school level",
-    chooseReward: "Choose reward",
-    wheelTitle: "Not sure? Spin the subject wheel",
-    spin: "Spin",
-    wheelReady: "Spin to get a random subject.",
-    wheelPicked: "Wheel selected: {subject}",
-    subjectLocked: "Finish all topics in {subject} before choosing another subject.",
-    subjectUnlocked: "Subject completed! You can now choose any subject.",
-    settings: "Settings"
+    startFromLevel: "Start from this school level"
   },
   es: {
     pageTitle: "Centro de Cuestionarios Progresivos",
@@ -77,15 +69,7 @@ const uiTranslations = {
     resultRetry: "Buen intento. Revisa el tema y vuelve a intentarlo.",
     correct: "¡Correcto! {explanation}",
     incorrect: "No exactamente. {explanation}",
-    startFromLevel: "Comienza desde este nivel escolar",
-    chooseReward: "Elegir recompensa",
-    wheelTitle: "¿No sabes cuál elegir? Gira la ruleta",
-    spin: "Girar",
-    wheelReady: "Gira para elegir una asignatura al azar.",
-    wheelPicked: "La ruleta eligió: {subject}",
-    subjectLocked: "Termina todos los temas de {subject} antes de elegir otra asignatura.",
-    subjectUnlocked: "¡Asignatura completada! Ya puedes elegir otra.",
-    settings: "Ajustes"
+    startFromLevel: "Comienza desde este nivel escolar"
   },
   fr: {
     pageTitle: "Hub de Quiz Progressif",
@@ -121,15 +105,7 @@ const uiTranslations = {
     resultRetry: "Bon effort. Révisez puis réessayez ce thème.",
     correct: "Correct ! {explanation}",
     incorrect: "Pas tout à fait. {explanation}",
-    startFromLevel: "Commencer à ce niveau scolaire",
-    chooseReward: "Choisir une récompense",
-    wheelTitle: "Pas sûr ? Tournez la roue des matières",
-    spin: "Tourner",
-    wheelReady: "Tournez pour obtenir une matière aléatoire.",
-    wheelPicked: "La roue a choisi : {subject}",
-    subjectLocked: "Terminez tous les thèmes de {subject} avant d'en choisir une autre.",
-    subjectUnlocked: "Matière terminée ! Vous pouvez en choisir une autre.",
-    settings: "Réglages"
+    startFromLevel: "Commencer à ce niveau scolaire"
   },
   ar: {
     pageTitle: "منصة الاختبارات المتدرجة",
@@ -165,15 +141,7 @@ const uiTranslations = {
     resultRetry: "محاولة جيدة. راجع الموضوع ثم أعد المحاولة.",
     correct: "إجابة صحيحة! {explanation}",
     incorrect: "ليست دقيقة. {explanation}",
-    startFromLevel: "ابدأ من هذا المستوى الدراسي",
-    chooseReward: "اختر المكافأة",
-    wheelTitle: "غير متأكد؟ دوّر عجلة المواد",
-    spin: "دوّر",
-    wheelReady: "اضغط لتختار مادة عشوائيًا.",
-    wheelPicked: "العجلة اختارت: {subject}",
-    subjectLocked: "أكمل كل مواضيع {subject} قبل اختيار مادة أخرى.",
-    subjectUnlocked: "اكتملت المادة! يمكنك الآن اختيار أي مادة.",
-    settings: "الإعدادات"
+    startFromLevel: "ابدأ من هذا المستوى الدراسي"
   }
 };
 
