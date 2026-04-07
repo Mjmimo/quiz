@@ -3,77 +3,64 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title id="page-title">Progressive Quiz Hub</title>
+    <title>Progressive Quiz Hub</title>
     <link rel="stylesheet" href="assets/css/styles.css" />
   </head>
   <body>
     <header class="hero">
       <div class="container">
-        <div class="header-row">
-          <div>
-            <p class="eyebrow" id="hero-eyebrow">Interactive Revision</p>
-            <h1 id="hero-heading">Grade → Subject → Topic Quiz Hub</h1>
-            <p class="subtitle" id="hero-subtitle">
-              Follow a simple learning path: select your school grade, choose a subject,
-              pick a focused topic, then complete a quiz adapted to your level.
-            </p>
-          </div>
-          <div class="lang-picker">
-            <label for="language-select" id="language-label">Interface language</label>
-            <select id="language-select">
-              <option value="en">English</option>
-              <option value="ar">العربية</option>
-              <option value="es">Español</option>
-              <option value="fr">Français</option>
-            </select>
-          </div>
-        </div>
+        <p class="eyebrow">Interactive Revision</p>
+        <h1>Grade → Subject → Topic Quiz Hub</h1>
+        <p class="subtitle">
+          Follow a simple learning path: select your school grade, choose a subject,
+          pick a focused topic, then complete a quiz adapted to your level.
+        </p>
       </div>
     </header>
 
     <main class="container app-shell" id="quiz-app" aria-live="polite">
       <nav class="stepper" aria-label="Quiz setup steps">
-        <span class="step" data-step="grade" id="step-grade">1. Grade</span>
-        <span class="step" data-step="subject" id="step-subject">2. Subject</span>
-        <span class="step" data-step="topic" id="step-topic">3. Topic</span>
-        <span class="step" data-step="quiz" id="step-quiz">4. Quiz</span>
+        <span class="step" data-step="grade">1. Grade</span>
+        <span class="step" data-step="subject">2. Subject</span>
+        <span class="step" data-step="topic">3. Topic</span>
+        <span class="step" data-step="quiz">4. Quiz</span>
       </nav>
 
       <section class="panel" id="grade-panel">
-        <h2 id="grade-title">Select your grade</h2>
-        <p class="panel-subtitle" id="grade-hint">Choose from Year 2 up to A Levels.</p>
+        <h2>Select your grade</h2>
+        <p class="panel-subtitle">Choose from Year 2 up to A Levels.</p>
         <div class="card-grid" id="grade-grid"></div>
       </section>
 
       <section class="panel hidden" id="subject-panel">
-        <button class="btn btn-secondary back-btn" id="back-to-grade" type="button">← Back to grades</button>
-        <h2 id="subject-title">Choose a subject</h2>
+        <button class="btn btn-secondary back-btn" type="button" data-back="grade">← Back to grades</button>
+        <h2>Choose a subject</h2>
         <p class="panel-subtitle" id="subject-context"></p>
         <div class="card-grid" id="subject-grid"></div>
       </section>
 
       <section class="panel hidden" id="topic-panel">
-        <button class="btn btn-secondary back-btn" id="back-to-subject" type="button">← Back to subjects</button>
-        <h2 id="topic-title">Choose a topic</h2>
+        <button class="btn btn-secondary back-btn" type="button" data-back="subject">← Back to subjects</button>
+        <h2>Choose a topic</h2>
         <p class="panel-subtitle" id="topic-context"></p>
         <div class="card-grid" id="topic-grid"></div>
       </section>
 
       <section class="panel hidden" id="quiz-panel">
-        <button class="btn btn-secondary back-btn" id="back-to-topic" type="button">← Back to topics</button>
+        <button class="btn btn-secondary back-btn" type="button" data-back="topic">← Back to topics</button>
         <h2 id="quiz-title"></h2>
         <p class="quiz-progress" id="quiz-progress"></p>
         <h3 id="question-text"></h3>
         <div class="choices" id="choices"></div>
         <p class="feedback" id="feedback"></p>
         <div class="quiz-actions">
-          <p class="live-score"><span id="score-label">Score:</span> <span id="score-value">0</span></p>
+          <p class="live-score">Score: <span id="score-value">0</span></p>
           <button id="next-btn" class="btn" type="button" disabled>Next question</button>
         </div>
       </section>
 
       <section class="panel hidden" id="result-panel">
-        <h2 id="quiz-done-title">Quiz complete!</h2>
+        <h2>Quiz complete!</h2>
         <p id="result-summary"></p>
         <p id="result-message"></p>
         <div class="result-actions">
@@ -86,12 +73,11 @@
 
     <footer class="footer">
       <div class="container">
-        <p id="footer-text">Built with HTML, CSS, and JavaScript — responsive and classroom-ready.</p>
+        <p>Built with HTML, CSS, and JavaScript — responsive and classroom-ready.</p>
       </div>
     </footer>
 
     <script src="assets/js/questions.js"></script>
-    <script src="assets/js/i18n.js"></script>
     <script src="assets/js/app.js"></script>
   </body>
 </html>
