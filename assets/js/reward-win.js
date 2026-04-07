@@ -3,7 +3,7 @@
   const reward = params.get("reward");
   const track = params.get("track");
 
-  const validRewards = ["Brownie", "Cookie", "Donuts", "Cupcake"];
+  const validRewards = ["Brownie", "Cookie", "Cupcake"];
   const winMessage = document.getElementById("win-message");
   const winDetail = document.getElementById("win-detail");
 
