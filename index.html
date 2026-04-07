@@ -3,72 +3,96 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Grade 8 Study Quiz Hub</title>
+    <title id="page-title">Progressive Quiz Hub</title>
     <link rel="stylesheet" href="assets/css/styles.css" />
   </head>
   <body>
     <header class="hero">
       <div class="container">
-        <p class="eyebrow">Interactive Revision</p>
-        <h1>Grade 8 Multi-Subject Quiz Hub</h1>
-        <p class="subtitle">
-          Pick a subject and test your knowledge with instant feedback, live
-          score tracking, and a final result summary.
-        </p>
+        <div class="header-row">
+          <div>
+            <p class="eyebrow" id="hero-eyebrow">Interactive Revision</p>
+            <h1 id="hero-heading">Grade → Subject → Topic Quiz Hub</h1>
+            <p class="subtitle" id="hero-subtitle">
+              Follow a simple learning path: select your school grade, choose a subject,
+              pick a focused topic, then complete a quiz adapted to your level.
+            </p>
+          </div>
+          <div class="lang-picker">
+            <label for="language-select" id="language-label">Interface language</label>
+            <select id="language-select">
+              <option value="en">English</option>
+              <option value="ar">العربية</option>
+              <option value="es">Español</option>
+              <option value="fr">Français</option>
+            </select>
+          </div>
+        </div>
       </div>
     </header>
 
-    <main class="container">
-      <section aria-labelledby="subject-menu-title" class="subject-menu">
-        <h2 id="subject-menu-title">Choose a subject</h2>
-        <div class="card-grid">
-          <a class="subject-card" href="subjects/math.html">
-            <h3>Mathematics</h3>
-            <p>Numbers, algebra, geometry, and problem solving.</p>
-          </a>
-          <a class="subject-card" href="subjects/english.html">
-            <h3>English</h3>
-            <p>Vocabulary, reading skills, and grammar in context.</p>
-          </a>
-          <a class="subject-card" href="subjects/history.html">
-            <h3>History</h3>
-            <p>Major events, people, and turning points in history.</p>
-          </a>
-          <a class="subject-card" href="subjects/geography.html">
-            <h3>Geography</h3>
-            <p>Maps, environments, climates, and global regions.</p>
-          </a>
-          <a class="subject-card" href="subjects/science.html">
-            <h3>Science</h3>
-            <p>Biology, chemistry, physics, and scientific methods.</p>
-          </a>
-          <a class="subject-card" href="subjects/technology.html">
-            <h3>Technology</h3>
-            <p>Digital systems, coding basics, and responsible tech use.</p>
-          </a>
-          <a class="subject-card" href="subjects/french-grammar.html">
-            <h3>French Grammar</h3>
-            <p>Conjugation, agreement, and sentence structure rules.</p>
-          </a>
+    <main class="container app-shell" id="quiz-app" aria-live="polite">
+      <nav class="stepper" aria-label="Quiz setup steps">
+        <span class="step" data-step="grade" id="step-grade">1. Grade</span>
+        <span class="step" data-step="subject" id="step-subject">2. Subject</span>
+        <span class="step" data-step="topic" id="step-topic">3. Topic</span>
+        <span class="step" data-step="quiz" id="step-quiz">4. Quiz</span>
+      </nav>
+
+      <section class="panel" id="grade-panel">
+        <h2 id="grade-title">Select your grade</h2>
+        <p class="panel-subtitle" id="grade-hint">Choose from Year 2 up to A Levels.</p>
+        <div class="card-grid" id="grade-grid"></div>
+      </section>
+
+      <section class="panel hidden" id="subject-panel">
+        <button class="btn btn-secondary back-btn" id="back-to-grade" type="button">← Back to grades</button>
+        <h2 id="subject-title">Choose a subject</h2>
+        <p class="panel-subtitle" id="subject-context"></p>
+        <div class="card-grid" id="subject-grid"></div>
+      </section>
+
+      <section class="panel hidden" id="topic-panel">
+        <button class="btn btn-secondary back-btn" id="back-to-subject" type="button">← Back to subjects</button>
+        <h2 id="topic-title">Choose a topic</h2>
+        <p class="panel-subtitle" id="topic-context"></p>
+        <div class="card-grid" id="topic-grid"></div>
+      </section>
+
+      <section class="panel hidden" id="quiz-panel">
+        <button class="btn btn-secondary back-btn" id="back-to-topic" type="button">← Back to topics</button>
+        <h2 id="quiz-title"></h2>
+        <p class="quiz-progress" id="quiz-progress"></p>
+        <h3 id="question-text"></h3>
+        <div class="choices" id="choices"></div>
+        <p class="feedback" id="feedback"></p>
+        <div class="quiz-actions">
+          <p class="live-score"><span id="score-label">Score:</span> <span id="score-value">0</span></p>
+          <button id="next-btn" class="btn" type="button" disabled>Next question</button>
         </div>
       </section>
 
-      <section aria-labelledby="wheel-title" class="wheel-section">
-        <h2 id="wheel-title">Not sure where to start? Spin the wheel!</h2>
-        <div class="wheel-wrap">
-          <div class="wheel-pointer" aria-hidden="true"></div>
-          <div class="subject-wheel" id="subject-wheel" role="img" aria-label="Subject selection wheel"></div>
+      <section class="panel hidden" id="result-panel">
+        <h2 id="quiz-done-title">Quiz complete!</h2>
+        <p id="result-summary"></p>
+        <p id="result-message"></p>
+        <div class="result-actions">
+          <button class="btn" id="retry-btn" type="button">Retry topic</button>
+          <button class="btn btn-secondary" id="new-topic-btn" type="button">Choose another topic</button>
+          <button class="btn btn-secondary" id="new-grade-btn" type="button">Start over</button>
+          <a class="btn hidden" id="reward-link" href="reward.html">Choose reward</a>
         </div>
-        <button class="btn" id="spin-wheel-btn" type="button">Spin</button>
-        <p id="wheel-result" class="wheel-result">Press spin to pick a random subject.</p>
       </section>
     </main>
 
     <footer class="footer">
       <div class="container">
-        <p>Built with HTML, CSS, and JavaScript — ready for GitHub Pages.</p>
+        <p id="footer-text">Built with HTML, CSS, and JavaScript — responsive and classroom-ready.</p>
       </div>
     </footer>
-    <script src="assets/js/home-wheel.js"></script>
+
+    <script src="assets/js/questions.js"></script>
+    <script src="assets/js/i18n.js"></script>
+    <script src="assets/js/app.js"></script>
   </body>
 </html>
