@@ -33,8 +33,7 @@ const uiTranslations = {
     resultRetry: "Good effort. Review and retry this topic to improve.",
     correct: "Correct! {explanation}",
     incorrect: "Not quite. {explanation}",
-    startFromLevel: "Start from this school level",
-    chooseReward: "Choose reward"
+    startFromLevel: "Start from this school level"
   },
   es: {
     pageTitle: "Centro de Cuestionarios Progresivos",
@@ -70,8 +69,7 @@ const uiTranslations = {
     resultRetry: "Buen intento. Revisa el tema y vuelve a intentarlo.",
     correct: "¡Correcto! {explanation}",
     incorrect: "No exactamente. {explanation}",
-    startFromLevel: "Comienza desde este nivel escolar",
-    chooseReward: "Elegir recompensa"
+    startFromLevel: "Comienza desde este nivel escolar"
   },
   fr: {
     pageTitle: "Hub de Quiz Progressif",
@@ -107,8 +105,7 @@ const uiTranslations = {
     resultRetry: "Bon effort. Révisez puis réessayez ce thème.",
     correct: "Correct ! {explanation}",
     incorrect: "Pas tout à fait. {explanation}",
-    startFromLevel: "Commencer à ce niveau scolaire",
-    chooseReward: "Choisir une récompense"
+    startFromLevel: "Commencer à ce niveau scolaire"
   },
   ar: {
     pageTitle: "منصة الاختبارات المتدرجة",
@@ -144,8 +141,7 @@ const uiTranslations = {
     resultRetry: "محاولة جيدة. راجع الموضوع ثم أعد المحاولة.",
     correct: "إجابة صحيحة! {explanation}",
     incorrect: "ليست دقيقة. {explanation}",
-    startFromLevel: "ابدأ من هذا المستوى الدراسي",
-    chooseReward: "اختر المكافأة"
+    startFromLevel: "ابدأ من هذا المستوى الدراسي"
   }
 };
 
