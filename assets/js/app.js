@@ -11,8 +11,8 @@
     current: 0,
     score: 0,
     answered: false,
-    lockedSubject: null,
-    completedByTrack: {}
+    wheelHistoryByGrade: {},
+    questionHistoryByTrack: {}
   };
 
   const pageTitle = document.getElementById("page-title");
@@ -96,6 +96,10 @@
     setActiveStep(key === "result" ? "quiz" : key);
   }
 
+  function shouldUseTopics(subjectId = state.subject?.id, gradeId = state.grade?.id) {
+    return subjectId === "maths" && gradeId === "year7";
+  }
+
   function buttonCard(label, description, onClick) {
     const button = document.createElement("button");
     button.type = "button";
@@ -149,50 +153,24 @@
         state.grade = grade;
         state.subject = null;
         state.topic = null;
+        state.questions = [];
         renderSubjects();
         showPanel("subject");
       }));
     });
   }
 
-
-  function isSubjectLockedForSelection(subjectId) {
-    return state.lockedSubject && state.lockedSubject !== subjectId;
-  }
-
-  function setLockedSubject(subjectId) {
-    if (!state.lockedSubject) state.lockedSubject = subjectId;
-  }
-
-  function trackKey() {
-    return `${state.grade.id}__${state.subject.id}`;
-  }
-
-  function markTopicComplete() {
-    const key = trackKey();
-    if (!state.completedByTrack[key]) state.completedByTrack[key] = new Set();
-    state.completedByTrack[key].add(state.topic);
-
-    const doneCount = state.completedByTrack[key].size;
-    if (doneCount >= state.subject.topics.length) {
-      state.lockedSubject = null;
-      wheelResult.textContent = t("subjectUnlocked");
-      wheelResult.dataset.picked = "1";
-    }
-  }
-
   function selectSubject(subject) {
-    if (isSubjectLockedForSelection(subject.id)) {
-      wheelResult.textContent = t("subjectLocked", { subject: localizedSubjectName(state.language, state.lockedSubject) });
-      wheelResult.dataset.picked = "1";
+    state.subject = subject;
+    state.topic = null;
+
+    if (shouldUseTopics()) {
+      renderTopics();
+      showPanel("topic");
       return;
     }
 
-    setLockedSubject(subject.id);
-    state.subject = subject;
-    state.topic = null;
-    renderTopics();
-    showPanel("topic");
+    startQuiz();
   }
 
   function renderSubjects() {
@@ -201,11 +179,8 @@
 
     curriculum.subjects.forEach((subject) => {
       const name = localizedSubjectName(state.language, subject.id);
-      const isLocked = isSubjectLockedForSelection(subject.id);
-      const description = isLocked ? t("subjectLocked", { subject: localizedSubjectName(state.language, state.lockedSubject) }) : t("topicsAvailable", { count: subject.topics.length });
+      const description = shouldUseTopics(subject.id, state.grade.id) ? t("topicsAvailable", { count: subject.topics.length }) : t("directQuiz");
       const card = buttonCard(name, description, () => selectSubject(subject));
-      card.disabled = isLocked;
-      if (isLocked) card.classList.add("locked-card");
       subjectGrid.appendChild(card);
     });
   }
@@ -222,7 +197,16 @@
   }
 
   function startQuiz() {
-    state.questions = quizBank[state.subject.id][state.topic][state.grade.id] || [];
+    const trackId = buildTrackId();
+
+    if (shouldUseTopics()) {
+      const topicQuestions = quizBank[state.subject.id][state.topic][state.grade.id] || [];
+      state.questions = pickQuestionsForTrack(topicQuestions, trackId, 4);
+    } else {
+      const topicEntries = Object.values(quizBank[state.subject.id] || {});
+      const allQuestions = topicEntries.flatMap((perGrade) => perGrade[state.grade.id] || []);
+      state.questions = pickQuestionsForTrack(allQuestions, trackId, 4);
+    }
     state.current = 0;
     state.score = 0;
     state.answered = false;
@@ -239,7 +223,10 @@
       return;
     }
 
-    quizTitle.textContent = `${gradeLabel(state.grade)} • ${localizedSubjectName(state.language, state.subject.id)} • ${localizedTopicName(state.language, state.topic)}`;
+    const quizTrackLabel = shouldUseTopics()
+      ? `${gradeLabel(state.grade)} • ${localizedSubjectName(state.language, state.subject.id)} • ${localizedTopicName(state.language, state.topic)}`
+      : `${gradeLabel(state.grade)} • ${localizedSubjectName(state.language, state.subject.id)}`;
+    quizTitle.textContent = quizTrackLabel;
     quizProgress.textContent = t("questionCount", { current: state.current + 1, total: state.questions.length });
     questionText.textContent = currentQuestion.question;
     feedback.textContent = "";
@@ -289,9 +276,7 @@
     resultSummary.textContent = t("resultSummary", { score: state.score, total: state.questions.length, pct });
     resultMessage.textContent = pct === 100 ? t("resultPerfect") : pct >= 70 ? t("resultGreat") : t("resultRetry");
 
-    markTopicComplete();
-
-    const track = `${state.grade.id}__${state.subject.id}__${state.topic}`;
+    const track = buildTrackId();
     if (pct === 100) {
       sessionStorage.setItem(`rewardUnlocked:${track}`, "true");
       rewardLink.href = `reward.html?track=${encodeURIComponent(track)}`;
@@ -311,12 +296,69 @@
     if (state.grade) {
       renderSubjects();
       if (state.subject) {
-        renderTopics();
-        if (!panels.quiz.classList.contains("hidden") && state.topic) {
+        if (shouldUseTopics()) {
+          renderTopics();
+        }
+        const hasActiveTrack = shouldUseTopics() ? Boolean(state.topic) : Boolean(state.subject);
+        if (!panels.quiz.classList.contains("hidden") && hasActiveTrack) {
           renderQuestion();
         }
       }
     }
+  }
+
+  function getAvailableSubjectsForGrade() {
+    const gradeId = state.grade.id;
+    const used = new Set(state.wheelHistoryByGrade[gradeId] || []);
+    let available = curriculum.subjects.filter((subject) => !used.has(subject.id));
+
+    if (!available.length) {
+      state.wheelHistoryByGrade[gradeId] = [];
+      available = curriculum.subjects.slice();
+    }
+
+    return available;
+  }
+
+  function rememberWheelPick(gradeId, subjectId) {
+    if (!state.wheelHistoryByGrade[gradeId]) {
+      state.wheelHistoryByGrade[gradeId] = [];
+    }
+    state.wheelHistoryByGrade[gradeId].push(subjectId);
+  }
+
+  function shuffle(list) {
+    const clone = list.slice();
+    for (let i = clone.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [clone[i], clone[j]] = [clone[j], clone[i]];
+    }
+    return clone;
+  }
+
+  function buildTrackId() {
+    return shouldUseTopics() ? `${state.grade.id}__${state.subject.id}__${state.topic}` : `${state.grade.id}__${state.subject.id}`;
+  }
+
+  function pickQuestionsForTrack(questionPool, trackId, count) {
+    if (!questionPool.length) return [];
+
+    if (!state.questionHistoryByTrack[trackId]) {
+      state.questionHistoryByTrack[trackId] = [];
+    }
+
+    const usedIndices = new Set(state.questionHistoryByTrack[trackId]);
+    let availableIndices = questionPool.map((_, idx) => idx).filter((idx) => !usedIndices.has(idx));
+
+    if (availableIndices.length < count) {
+      state.questionHistoryByTrack[trackId] = [];
+      availableIndices = questionPool.map((_, idx) => idx);
+    }
+
+    const pickedIndices = shuffle(availableIndices).slice(0, Math.min(count, questionPool.length));
+    state.questionHistoryByTrack[trackId].push(...pickedIndices);
+
+    return pickedIndices.map((idx) => questionPool[idx]);
   }
 
 
@@ -339,11 +381,12 @@
     wheel.style.transform = `rotate(${currentRotation}deg)`;
 
     setTimeout(() => {
-      const available = curriculum.subjects.filter((item) => !isSubjectLockedForSelection(item.id));
+      const available = getAvailableSubjectsForGrade();
       if (!available.length) {
-        wheelResult.textContent = t("subjectLocked", { subject: localizedSubjectName(state.language, state.lockedSubject) });
+        wheelResult.textContent = t("wheelReady");
       } else {
         const picked = available[Math.floor(Math.random() * available.length)];
+        rememberWheelPick(state.grade.id, picked.id);
         wheelResult.textContent = t("wheelPicked", { subject: localizedSubjectName(state.language, picked.id) });
         wheelResult.dataset.picked = "1";
         selectSubject(picked);
@@ -362,7 +405,7 @@
   backToTopic.addEventListener("click", () => showPanel("topic"));
 
   retryBtn.addEventListener("click", startQuiz);
-  newTopicBtn.addEventListener("click", () => showPanel("topic"));
+  newTopicBtn.addEventListener("click", () => showPanel(shouldUseTopics() ? "topic" : "subject"));
   newGradeBtn.addEventListener("click", () => showPanel("grade"));
 
   applyStaticTranslations();
