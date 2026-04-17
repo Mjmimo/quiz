@@ -147,7 +147,7 @@
 
   function renderGrades() {
     gradeGrid.innerHTML = "";
-    curriculum.grades.forEach((grade) => {
+    getGradesForDisplay().forEach((grade) => {
       gradeGrid.appendChild(buttonCard(gradeLabel(grade), t("startFromLevel"), () => {
         state.grade = grade;
         state.subject = null;
