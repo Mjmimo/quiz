@@ -1,8 +1,9 @@
 (function () {
   const app = document.getElementById("quiz-app");
-  if (!app || typeof curriculum === "undefined") return;
+  if (!app || typeof curriculum === "undefined" || typeof quizBank === "undefined") return;
 
   const state = {
+    language: "en",
     grade: null,
     subject: null,
     topic: null,
@@ -10,8 +11,39 @@
     current: 0,
     score: 0,
     answered: false,
-    usedSubjectsByGrade: {}
+    lockedSubject: null,
+    completedByTrack: {}
   };
+
+  const pageTitle = document.getElementById("page-title");
+  const heroEyebrow = document.getElementById("hero-eyebrow");
+  const heroHeading = document.getElementById("hero-heading");
+  const heroSubtitle = document.getElementById("hero-subtitle");
+  const languageLabel = document.getElementById("language-label");
+  const languageSelect = document.getElementById("language-select");
+  const settingsToggle = document.getElementById("settings-toggle");
+  const langPickerPanel = document.getElementById("lang-picker-panel");
+  const gradeTitle = document.getElementById("grade-title");
+  const gradeHint = document.getElementById("grade-hint");
+  const subjectTitle = document.getElementById("subject-title");
+  const topicTitle = document.getElementById("topic-title");
+  const quizDoneTitle = document.getElementById("quiz-done-title");
+  const retryBtn = document.getElementById("retry-btn");
+  const newTopicBtn = document.getElementById("new-topic-btn");
+  const newGradeBtn = document.getElementById("new-grade-btn");
+  const nextBtn = document.getElementById("next-btn");
+  const scoreLabel = document.getElementById("score-label");
+  const footerText = document.getElementById("footer-text");
+  const rewardLink = document.getElementById("reward-link");
+  const wheelTitle = document.getElementById("wheel-title");
+  const wheel = document.getElementById("subject-wheel");
+  const spinBtn = document.getElementById("spin-wheel-btn");
+  const wheelResult = document.getElementById("wheel-result");
+
+  const stepGrade = document.getElementById("step-grade");
+  const stepSubject = document.getElementById("step-subject");
+  const stepTopic = document.getElementById("step-topic");
+  const stepQuiz = document.getElementById("step-quiz");
 
   const panels = {
     grade: document.getElementById("grade-panel"),
@@ -20,6 +52,10 @@
     quiz: document.getElementById("quiz-panel"),
     result: document.getElementById("result-panel")
   };
+
+  const backToGrade = document.getElementById("back-to-grade");
+  const backToSubject = document.getElementById("back-to-subject");
+  const backToTopic = document.getElementById("back-to-topic");
 
   const gradeGrid = document.getElementById("grade-grid");
   const subjectGrid = document.getElementById("subject-grid");
@@ -33,10 +69,17 @@
   const choices = document.getElementById("choices");
   const feedback = document.getElementById("feedback");
   const scoreValue = document.getElementById("score-value");
-  const nextBtn = document.getElementById("next-btn");
 
   const resultSummary = document.getElementById("result-summary");
   const resultMessage = document.getElementById("result-message");
+
+  function t(key, vars) {
+    return translateUI(state.language, key, vars);
+  }
+
+  function gradeLabel(grade) {
+    return grade.label;
+  }
 
   function setActiveStep(step) {
     document.querySelectorAll(".step").forEach((el) => {
@@ -62,97 +105,47 @@
     return button;
   }
 
-  function ensureGradeSubjectHistory(gradeId) {
-    if (!state.usedSubjectsByGrade[gradeId]) {
-      state.usedSubjectsByGrade[gradeId] = new Set();
-    }
-    return state.usedSubjectsByGrade[gradeId];
-  }
+  function applyStaticTranslations() {
+    document.documentElement.dir = state.language === "ar" ? "rtl" : "ltr";
+    document.documentElement.lang = state.language;
 
-  function pickFairRandomSubjectForGrade(gradeId) {
-    const history = ensureGradeSubjectHistory(gradeId);
-    const available = curriculum.subjects.filter((subject) => !history.has(subject.id));
+    pageTitle.textContent = t("pageTitle");
+    heroEyebrow.textContent = t("eyebrow");
+    heroHeading.textContent = t("heading");
+    heroSubtitle.textContent = t("subtitle");
+    languageLabel.textContent = t("languageLabel");
+    settingsToggle.textContent = `⚙ ${t("settings")}`;
 
-    if (!available.length) {
-      history.clear();
-      return pickFairRandomSubjectForGrade(gradeId);
-    }
+    stepGrade.textContent = t("stepGrade");
+    stepSubject.textContent = t("stepSubject");
+    stepTopic.textContent = t("stepTopic");
+    stepQuiz.textContent = t("stepQuiz");
 
-    const chosen = available[Math.floor(Math.random() * available.length)];
-    history.add(chosen.id);
-    return chosen;
-  }
+    gradeTitle.textContent = t("selectGrade");
+    gradeHint.textContent = t("selectGradeHint");
+    subjectTitle.textContent = t("chooseSubject");
+    topicTitle.textContent = t("chooseTopic");
+    backToGrade.textContent = t("backGrades");
+    backToSubject.textContent = t("backSubjects");
+    backToTopic.textContent = t("backTopics");
 
-  function stableHash(input) {
-    let hash = 2166136261;
-    for (let i = 0; i < input.length; i += 1) {
-      hash ^= input.charCodeAt(i);
-      hash = Math.imul(hash, 16777619);
-    }
-    return hash >>> 0;
-  }
-
-  function rngFromSeed(seed) {
-    let value = seed || 1;
-    return function next() {
-      value = (value * 1664525 + 1013904223) >>> 0;
-      return value / 4294967296;
-    };
-  }
-
-  function getShuffledIndices(size, randomFn) {
-    const indices = Array.from({ length: size }, (_, idx) => idx);
-    for (let i = indices.length - 1; i > 0; i -= 1) {
-      const j = Math.floor(randomFn() * (i + 1));
-      [indices[i], indices[j]] = [indices[j], indices[i]];
-    }
-    return indices;
-  }
-
-  function removeSecondDuplicateChoice(question) {
-    if (!Array.isArray(question.options) || question.options.length < 2) {
-      return question;
-    }
-
-    if (question.options[1] !== question.options[0]) {
-      return question;
-    }
-
-    const options = question.options.filter((_, idx) => idx !== 1);
-    let answer = question.answer;
-    if (answer === 1) {
-      answer = 0;
-    } else if (answer > 1) {
-      answer -= 1;
-    }
-
-    return {
-      ...question,
-      options,
-      answer
-    };
-  }
-
-  function buildQuestionsForGrade(baseQuestions) {
-    const seedText = `${state.grade.id}:${state.subject.id}:${state.topic.id}`;
-    return baseQuestions.map((question, questionIndex) => {
-      const rng = rngFromSeed(stableHash(`${seedText}:${questionIndex}`));
-      const order = getShuffledIndices(question.options.length, rng);
-      const options = order.map((optionIndex) => question.options[optionIndex]);
-      const answer = order.indexOf(question.answer);
-
-      return removeSecondDuplicateChoice({
-        ...question,
-        options,
-        answer
-      });
-    });
+    quizDoneTitle.textContent = t("quizDone");
+    retryBtn.textContent = t("retryTopic");
+    newTopicBtn.textContent = t("chooseAnotherTopic");
+    newGradeBtn.textContent = t("startOver");
+    nextBtn.textContent = t("nextQuestion");
+    scoreLabel.textContent = `${t("score")}:`;
+    footerText.textContent = t("footer");
+    rewardLink.textContent = t("chooseReward");
+    wheelTitle.textContent = t("wheelTitle");
+    spinBtn.textContent = t("spin");
+    if (!wheelResult.dataset.picked) wheelResult.textContent = t("wheelReady");
   }
 
   function renderGrades() {
     gradeGrid.innerHTML = "";
     curriculum.grades.forEach((grade) => {
-      gradeGrid.appendChild(buttonCard(grade.label, "Start from this school level", () => {
+      gradeGrid.appendChild(buttonCard(gradeLabel(grade), t("startFromLevel"), () => {
         state.grade = grade;
         state.subject = null;
         state.topic = null;
@@ -162,53 +155,79 @@
     });
   }
 
+
+  function isSubjectLockedForSelection(subjectId) {
+    return state.lockedSubject && state.lockedSubject !== subjectId;
+  }
+
+  function setLockedSubject(subjectId) {
+    if (!state.lockedSubject) state.lockedSubject = subjectId;
+  }
+
+  function trackKey() {
+    return `${state.grade.id}__${state.subject.id}`;
+  }
+
+  function markTopicComplete() {
+    const key = trackKey();
+    if (!state.completedByTrack[key]) state.completedByTrack[key] = new Set();
+    state.completedByTrack[key].add(state.topic);
+
+    const doneCount = state.completedByTrack[key].size;
+    if (doneCount >= state.subject.topics.length) {
+      state.lockedSubject = null;
+      wheelResult.textContent = t("subjectUnlocked");
+      wheelResult.dataset.picked = "1";
+    }
+  }
+
+  function selectSubject(subject) {
+    if (isSubjectLockedForSelection(subject.id)) {
+      wheelResult.textContent = t("subjectLocked", { subject: localizedSubjectName(state.language, state.lockedSubject) });
+      wheelResult.dataset.picked = "1";
+      return;
+    }
+
+    setLockedSubject(subject.id);
+    state.subject = subject;
+    state.topic = null;
+    renderTopics();
+    showPanel("topic");
+  }
+
   function renderSubjects() {
     subjectGrid.innerHTML = "";
-    subjectContext.textContent = `Selected grade: ${state.grade.label}`;
+    subjectContext.textContent = t("selectedGrade", { grade: gradeLabel(state.grade) });
 
-    subjectGrid.appendChild(buttonCard("🎡 Fair random subject", "Spin the wheel: avoids repeats for this grade", () => {
-      state.subject = pickFairRandomSubjectForGrade(state.grade.id);
-      state.topic = null;
-      renderTopics();
-      showPanel("topic");
-    }));
-
-    const renderedSubjectIds = new Set();
     curriculum.subjects.forEach((subject) => {
-      if (renderedSubjectIds.has(subject.id)) {
-        return;
-      }
-      renderedSubjectIds.add(subject.id);
-
-      subjectGrid.appendChild(buttonCard(subject.label, `${subject.topics.length} topics available`, () => {
-        state.subject = subject;
-        state.topic = null;
-        ensureGradeSubjectHistory(state.grade.id).add(subject.id);
-        renderTopics();
-        showPanel("topic");
-      }));
+      const name = localizedSubjectName(state.language, subject.id);
+      const isLocked = isSubjectLockedForSelection(subject.id);
+      const description = isLocked ? t("subjectLocked", { subject: localizedSubjectName(state.language, state.lockedSubject) }) : t("topicsAvailable", { count: subject.topics.length });
+      const card = buttonCard(name, description, () => selectSubject(subject));
+      card.disabled = isLocked;
+      if (isLocked) card.classList.add("locked-card");
+      subjectGrid.appendChild(card);
     });
   }
 
   function renderTopics() {
     topicGrid.innerHTML = "";
-    topicContext.textContent = `${state.grade.label} • ${state.subject.label}`;
-    state.subject.topics.forEach((topic) => {
-      topicGrid.appendChild(buttonCard(topic.label, `Level-adapted quiz for ${state.grade.label}`, () => {
-        state.topic = topic;
+    topicContext.textContent = `${gradeLabel(state.grade)} • ${localizedSubjectName(state.language, state.subject.id)}`;
+    state.subject.topics.forEach((topicId) => {
+      topicGrid.appendChild(buttonCard(localizedTopicName(state.language, topicId), t("levelAdapted", { grade: gradeLabel(state.grade) }), () => {
+        state.topic = topicId;
         startQuiz();
       }));
     });
   }
 
   function startQuiz() {
-    const band = getLevelBand(state.grade.id);
-    const baseQuestions = state.topic.questionBuilder(band);
-    state.questions = buildQuestionsForGrade(baseQuestions);
+    state.questions = quizBank[state.subject.id][state.topic][state.grade.id] || [];
     state.current = 0;
     state.score = 0;
     state.answered = false;
     scoreValue.textContent = "0";
+    rewardLink.classList.add("hidden");
     showPanel("quiz");
     renderQuestion();
   }
@@ -220,8 +239,8 @@
       return;
     }
 
-    quizTitle.textContent = `${state.grade.label} • ${state.subject.label} • ${state.topic.label}`;
-    quizProgress.textContent = `Question ${state.current + 1} of ${state.questions.length}`;
+    quizTitle.textContent = `${gradeLabel(state.grade)} • ${localizedSubjectName(state.language, state.subject.id)} • ${localizedTopicName(state.language, state.topic)}`;
+    quizProgress.textContent = t("questionCount", { current: state.current + 1, total: state.questions.length });
     questionText.textContent = currentQuestion.question;
     feedback.textContent = "";
     feedback.className = "feedback";
@@ -256,10 +275,10 @@
       state.score += 1;
       scoreValue.textContent = String(state.score);
       feedback.classList.add("ok");
-      feedback.textContent = `Correct! ${currentQuestion.explanation}`;
+      feedback.textContent = t("correct", { explanation: currentQuestion.explanation });
     } else {
       feedback.classList.add("ko");
-      feedback.textContent = `Not quite. ${currentQuestion.explanation}`;
+      feedback.textContent = t("incorrect", { explanation: currentQuestion.explanation });
     }
 
     nextBtn.disabled = false;
@@ -267,29 +286,86 @@
 
   function showResult() {
     const pct = Math.round((state.score / state.questions.length) * 100);
-    resultSummary.textContent = `You scored ${state.score} out of ${state.questions.length} (${pct}%).`;
-    resultMessage.textContent = pct === 100
-      ? "Excellent work — full marks!"
-      : pct >= 70
-        ? "Great progress! Try another topic to keep building confidence."
-        : "Good effort. Review and retry this topic to improve.";
+    resultSummary.textContent = t("resultSummary", { score: state.score, total: state.questions.length, pct });
+    resultMessage.textContent = pct === 100 ? t("resultPerfect") : pct >= 70 ? t("resultGreat") : t("resultRetry");
+
+    markTopicComplete();
+
+    const track = `${state.grade.id}__${state.subject.id}__${state.topic}`;
+    if (pct === 100) {
+      sessionStorage.setItem(`rewardUnlocked:${track}`, "true");
+      rewardLink.href = `reward.html?track=${encodeURIComponent(track)}`;
+      rewardLink.classList.remove("hidden");
+    } else {
+      sessionStorage.removeItem(`rewardUnlocked:${track}`);
+      rewardLink.classList.add("hidden");
+    }
 
     showPanel("result");
   }
+
+  function rerenderForLanguage() {
+    applyStaticTranslations();
+    if (!wheelResult.dataset.picked) wheelResult.textContent = t("wheelReady");
+    renderGrades();
+    if (state.grade) {
+      renderSubjects();
+      if (state.subject) {
+        renderTopics();
+        if (!panels.quiz.classList.contains("hidden") && state.topic) {
+          renderQuestion();
+        }
+      }
+    }
+  }
+
+
+  settingsToggle.addEventListener("click", () => {
+    langPickerPanel.classList.toggle("hidden");
+  });
+
+  languageSelect.addEventListener("change", (event) => {
+    state.language = event.target.value;
+    rerenderForLanguage();
+  });
+
+
+  let currentRotation = 0;
+  spinBtn.addEventListener("click", () => {
+    if (!state.grade) return;
+    spinBtn.disabled = true;
+    const extraTurns = 4 + Math.floor(Math.random() * 4);
+    currentRotation += extraTurns * 360 + Math.random() * 360;
+    wheel.style.transform = `rotate(${currentRotation}deg)`;
+
+    setTimeout(() => {
+      const available = curriculum.subjects.filter((item) => !isSubjectLockedForSelection(item.id));
+      if (!available.length) {
+        wheelResult.textContent = t("subjectLocked", { subject: localizedSubjectName(state.language, state.lockedSubject) });
+      } else {
+        const picked = available[Math.floor(Math.random() * available.length)];
+        wheelResult.textContent = t("wheelPicked", { subject: localizedSubjectName(state.language, picked.id) });
+        wheelResult.dataset.picked = "1";
+        selectSubject(picked);
+      }
+      spinBtn.disabled = false;
+    }, 2800);
+  });
 
   nextBtn.addEventListener("click", () => {
     state.current += 1;
     renderQuestion();
   });
 
-  document.querySelectorAll(".back-btn").forEach((btn) => {
-    btn.addEventListener("click", () => showPanel(btn.dataset.back));
-  });
+  backToGrade.addEventListener("click", () => showPanel("grade"));
+  backToSubject.addEventListener("click", () => showPanel("subject"));
+  backToTopic.addEventListener("click", () => showPanel("topic"));
 
-  document.getElementById("retry-btn").addEventListener("click", startQuiz);
-  document.getElementById("new-topic-btn").addEventListener("click", () => showPanel("topic"));
-  document.getElementById("new-grade-btn").addEventListener("click", () => showPanel("grade"));
+  retryBtn.addEventListener("click", startQuiz);
+  newTopicBtn.addEventListener("click", () => showPanel("topic"));
+  newGradeBtn.addEventListener("click", () => showPanel("grade"));
 
+  applyStaticTranslations();
   renderGrades();
   showPanel("grade");
 })();
