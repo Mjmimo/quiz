@@ -180,6 +180,8 @@
   }
 
   function buildQuestionsForGrade(baseQuestions) {
+    const topicSeed = state.topic ? state.topic.id : "all-topics";
+    const seedText = `${state.grade.id}:${state.subject.id}:${topicSeed}`;
     const seedText = `${state.grade.id}:${state.subject.id}:${state.topic.id}`;
     return baseQuestions.map((question, questionIndex) => {
       const rng = rngFromSeed(stableHash(`${seedText}:${questionIndex}`));
@@ -229,6 +231,14 @@
     subjectGrid.appendChild(buttonCard("🎡 Fair random subject", "Spin the wheel: avoids repeats for this grade", () => {
       state.subject = pickFairRandomSubjectForGrade(state.grade.id);
       state.topic = null;
+
+      if (state.subject.id === "maths") {
+        renderTopics();
+        showPanel("topic");
+        return;
+      }
+
+      startQuiz();
       renderTopics();
       showPanel("topic");
     }));
@@ -244,6 +254,14 @@
         state.subject = subject;
         state.topic = null;
         ensureGradeSubjectHistory(state.grade.id).add(subject.id);
+
+        if (subject.id === "maths") {
+          renderTopics();
+          showPanel("topic");
+          return;
+        }
+
+        startQuiz();
         renderTopics();
         showPanel("topic");
       }));
@@ -263,6 +281,11 @@
 
   function startQuiz() {
     const band = getLevelBand(state.grade.id);
+
+    const baseQuestions = state.subject.id === "maths"
+      ? state.topic.questionBuilder(band)
+      : state.subject.topics.flatMap((topic) => topic.questionBuilder(band));
+
     const baseQuestions = state.topic.questionBuilder(band);
     state.questions = buildQuestionsForGrade(baseQuestions);
     state.current = 0;
@@ -281,6 +304,10 @@
       return;
     }
 
+    quizTitle.textContent = state.topic
+      ? `${state.grade.label} • ${state.subject.label} • ${state.topic.label}`
+      : `${state.grade.label} • ${state.subject.label}`;
+    quizProgress.textContent = `Question ${state.current + 1} of ${state.questions.length}`;
     const quizTrackLabel = shouldUseTopics()
       ? `${gradeLabel(state.grade)} • ${localizedSubjectName(state.language, state.subject.id)} • ${localizedTopicName(state.language, state.topic)}`
       : `${gradeLabel(state.grade)} • ${localizedSubjectName(state.language, state.subject.id)}`;
