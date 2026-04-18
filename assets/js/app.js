@@ -11,7 +11,7 @@
     current: 0,
     score: 0,
     answered: false,
-    wheelHistoryByGrade: {}
+    usedSubjectsByGrade: {}
   };
 
   const pageTitle = document.getElementById("page-title");
@@ -108,41 +108,91 @@
     return button;
   }
 
-  function applyStaticTranslations() {
-    document.documentElement.dir = state.language === "ar" ? "rtl" : "ltr";
-    document.documentElement.lang = state.language;
+  function ensureGradeSubjectHistory(gradeId) {
+    if (!state.usedSubjectsByGrade[gradeId]) {
+      state.usedSubjectsByGrade[gradeId] = new Set();
+    }
+    return state.usedSubjectsByGrade[gradeId];
+  }
 
-    pageTitle.textContent = t("pageTitle");
-    heroEyebrow.textContent = t("eyebrow");
-    heroHeading.textContent = t("heading");
-    heroSubtitle.textContent = t("subtitle");
-    languageLabel.textContent = t("languageLabel");
-    settingsToggle.textContent = `⚙ ${t("settings")}`;
+  function pickFairRandomSubjectForGrade(gradeId) {
+    const history = ensureGradeSubjectHistory(gradeId);
+    const available = curriculum.subjects.filter((subject) => !history.has(subject.id));
 
-    stepGrade.textContent = t("stepGrade");
-    stepSubject.textContent = t("stepSubject");
-    stepTopic.textContent = t("stepTopic");
-    stepQuiz.textContent = t("stepQuiz");
+    if (!available.length) {
+      history.clear();
+      return pickFairRandomSubjectForGrade(gradeId);
+    }
 
-    gradeTitle.textContent = t("selectGrade");
-    gradeHint.textContent = t("selectGradeHint");
-    subjectTitle.textContent = t("chooseSubject");
-    topicTitle.textContent = t("chooseTopic");
-    backToGrade.textContent = t("backGrades");
-    backToSubject.textContent = t("backSubjects");
-    backToTopic.textContent = t("backSubjects");
+    const chosen = available[Math.floor(Math.random() * available.length)];
+    history.add(chosen.id);
+    return chosen;
+  }
 
-    quizDoneTitle.textContent = t("quizDone");
-    retryBtn.textContent = t("retryTopic");
-    newTopicBtn.textContent = t("chooseAnotherTopic");
-    newGradeBtn.textContent = t("startOver");
-    nextBtn.textContent = t("nextQuestion");
-    scoreLabel.textContent = `${t("score")}:`;
-    footerText.textContent = t("footer");
-    rewardLink.textContent = t("chooseReward");
-    wheelTitle.textContent = t("wheelTitle");
-    spinBtn.textContent = t("spin");
-    if (!wheelResult.dataset.picked) wheelResult.textContent = t("wheelReady");
+  function stableHash(input) {
+    let hash = 2166136261;
+    for (let i = 0; i < input.length; i += 1) {
+      hash ^= input.charCodeAt(i);
+      hash = Math.imul(hash, 16777619);
+    }
+    return hash >>> 0;
+  }
+
+  function rngFromSeed(seed) {
+    let value = seed || 1;
+    return function next() {
+      value = (value * 1664525 + 1013904223) >>> 0;
+      return value / 4294967296;
+    };
+  }
+
+  function getShuffledIndices(size, randomFn) {
+    const indices = Array.from({ length: size }, (_, idx) => idx);
+    for (let i = indices.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(randomFn() * (i + 1));
+      [indices[i], indices[j]] = [indices[j], indices[i]];
+    }
+    return indices;
+  }
+
+  function removeSecondDuplicateChoice(question) {
+    if (!Array.isArray(question.options) || question.options.length < 2) {
+      return question;
+    }
+
+    if (question.options[1] !== question.options[0]) {
+      return question;
+    }
+
+    const options = question.options.filter((_, idx) => idx !== 1);
+    let answer = question.answer;
+    if (answer === 1) {
+      answer = 0;
+    } else if (answer > 1) {
+      answer -= 1;
+    }
+
+    return {
+      ...question,
+      options,
+      answer
+    };
+  }
+
+  function buildQuestionsForGrade(baseQuestions) {
+    const seedText = `${state.grade.id}:${state.subject.id}:${state.topic.id}`;
+    return baseQuestions.map((question, questionIndex) => {
+      const rng = rngFromSeed(stableHash(`${seedText}:${questionIndex}`));
+      const order = getShuffledIndices(question.options.length, rng);
+      const options = order.map((optionIndex) => question.options[optionIndex]);
+      const answer = order.indexOf(question.answer);
+
+      return removeSecondDuplicateChoice({
+        ...question,
+        options,
+        answer
+      });
+    });
   }
 
   function renderGrades() {
@@ -174,14 +224,29 @@
 
   function renderSubjects() {
     subjectGrid.innerHTML = "";
-    subjectGrid.classList.add("hidden");
-    subjectContext.textContent = t("selectedGrade", { grade: gradeLabel(state.grade) });
+    subjectContext.textContent = `Selected grade: ${state.grade.label}`;
 
+    subjectGrid.appendChild(buttonCard("🎡 Fair random subject", "Spin the wheel: avoids repeats for this grade", () => {
+      state.subject = pickFairRandomSubjectForGrade(state.grade.id);
+      state.topic = null;
+      renderTopics();
+      showPanel("topic");
+    }));
+
+    const renderedSubjectIds = new Set();
     curriculum.subjects.forEach((subject) => {
-      const name = localizedSubjectName(state.language, subject.id);
-      const description = shouldUseTopics(subject.id, state.grade.id) ? t("topicsAvailable", { count: subject.topics.length }) : t("directQuiz");
-      const card = buttonCard(name, description, () => selectSubject(subject));
-      subjectGrid.appendChild(card);
+      if (renderedSubjectIds.has(subject.id)) {
+        return;
+      }
+      renderedSubjectIds.add(subject.id);
+
+      subjectGrid.appendChild(buttonCard(subject.label, `${subject.topics.length} topics available`, () => {
+        state.subject = subject;
+        state.topic = null;
+        ensureGradeSubjectHistory(state.grade.id).add(subject.id);
+        renderTopics();
+        showPanel("topic");
+      }));
     });
   }
 
@@ -197,13 +262,9 @@
   }
 
   function startQuiz() {
-    if (shouldUseTopics()) {
-      state.questions = quizBank[state.subject.id][state.topic][state.grade.id] || [];
-    } else {
-      const topicEntries = Object.values(quizBank[state.subject.id] || {});
-      const allQuestions = topicEntries.flatMap((perGrade) => perGrade[state.grade.id] || []);
-      state.questions = shuffle(allQuestions).slice(0, 4);
-    }
+    const band = getLevelBand(state.grade.id);
+    const baseQuestions = state.topic.questionBuilder(band);
+    state.questions = buildQuestionsForGrade(baseQuestions);
     state.current = 0;
     state.score = 0;
     state.answered = false;
