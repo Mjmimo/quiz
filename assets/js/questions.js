@@ -383,6 +383,19 @@ function ensureFourQuestions(questions, gradeIndex, gradeLabel, subject, topic) 
 }
 
 function q(question, options, answer, explanation) {
-  return { question, options, answer, explanation };
-}
+  const normalizedOptions = [];
+  let normalizedAnswer = answer;
 
+  options.forEach((option, index) => {
+    if (!normalizedOptions.includes(option)) {
+      normalizedOptions.push(option);
+      return;
+    }
+
+    if (index < answer) {
+      normalizedAnswer -= 1;
+    }
+  });
+
+  return { question, options: normalizedOptions, answer: normalizedAnswer, explanation };
+}
