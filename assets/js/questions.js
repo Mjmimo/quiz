@@ -373,7 +373,7 @@ function ensureFourQuestions(questions, gradeIndex, gradeLabel, subject, topic) 
   const list = questions.slice(0, 4);
   while (list.length < 4) {
     list.push(q(
-      `[${gradeLabel}] Bonus (${subject}/${topic}) #${list.length + 1}: What is ${gradeIndex + list.length + 2} + ${list.length + 1}?`,
+      `[${gradeLabel}] Bonus (${subject}) #${list.length + 1}: What is ${gradeIndex + list.length + 2} + ${list.length + 1}?`,
       [String(gradeIndex + list.length + 1), String(gradeIndex + list.length + 2), String(gradeIndex + list.length + 3), String(gradeIndex + list.length + 4)],
       2,
       "Add the two numbers."
@@ -383,6 +383,19 @@ function ensureFourQuestions(questions, gradeIndex, gradeLabel, subject, topic) 
 }
 
 function q(question, options, answer, explanation) {
-  return { question, options, answer, explanation };
-}
+  const normalizedOptions = [];
+  let normalizedAnswer = answer;
 
+  options.forEach((option, index) => {
+    if (!normalizedOptions.includes(option)) {
+      normalizedOptions.push(option);
+      return;
+    }
+
+    if (index < answer) {
+      normalizedAnswer -= 1;
+    }
+  });
+
+  return { question, options: normalizedOptions, answer: normalizedAnswer, explanation };
+}
