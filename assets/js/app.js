@@ -130,7 +130,7 @@
     topicTitle.textContent = t("chooseTopic");
     backToGrade.textContent = t("backGrades");
     backToSubject.textContent = t("backSubjects");
-    backToTopic.textContent = t("backTopics");
+    backToTopic.textContent = t("backSubjects");
 
     quizDoneTitle.textContent = t("quizDone");
     retryBtn.textContent = t("retryTopic");
@@ -174,6 +174,7 @@
 
   function renderSubjects() {
     subjectGrid.innerHTML = "";
+    subjectGrid.classList.add("hidden");
     subjectContext.textContent = t("selectedGrade", { grade: gradeLabel(state.grade) });
 
     curriculum.subjects.forEach((subject) => {
@@ -373,7 +374,7 @@
 
   backToGrade.addEventListener("click", () => showPanel("grade"));
   backToSubject.addEventListener("click", () => showPanel("subject"));
-  backToTopic.addEventListener("click", () => showPanel("topic"));
+  backToTopic.addEventListener("click", () => showPanel("subject"));
 
   retryBtn.addEventListener("click", startQuiz);
   newTopicBtn.addEventListener("click", () => showPanel(shouldUseTopics() ? "topic" : "subject"));
@@ -381,5 +382,7 @@
 
   applyStaticTranslations();
   renderGrades();
+  stepTopic.classList.add("hidden");
+  panels.topic.classList.add("hidden");
   showPanel("grade");
 })();
