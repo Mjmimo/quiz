@@ -11,8 +11,7 @@
     current: 0,
     score: 0,
     answered: false,
-    wheelHistoryByGrade: {},
-    questionHistoryByTrack: {}
+    wheelHistoryByGrade: {}
   };
 
   const pageTitle = document.getElementById("page-title");
@@ -96,15 +95,8 @@
     setActiveStep(key === "result" ? "quiz" : key);
   }
 
-  function shouldUseTopics(subjectId, gradeId) {
-    const resolvedSubjectId = typeof subjectId === "undefined"
-      ? (state.subject ? state.subject.id : null)
-      : subjectId;
-    const resolvedGradeId = typeof gradeId === "undefined"
-      ? (state.grade ? state.grade.id : null)
-      : gradeId;
-
-    return resolvedSubjectId === "maths" && resolvedGradeId === "year7";
+  function shouldUseTopics(subjectId = state.subject?.id, gradeId = state.grade?.id) {
+    return subjectId === "maths" && gradeId === "year7";
   }
 
   function buttonCard(label, description, onClick) {
@@ -204,15 +196,12 @@
   }
 
   function startQuiz() {
-    const trackId = buildTrackId();
-
     if (shouldUseTopics()) {
-      const topicQuestions = quizBank[state.subject.id][state.topic][state.grade.id] || [];
-      state.questions = pickQuestionsForTrack(topicQuestions, trackId, 4);
+      state.questions = quizBank[state.subject.id][state.topic][state.grade.id] || [];
     } else {
       const topicEntries = Object.values(quizBank[state.subject.id] || {});
       const allQuestions = topicEntries.flatMap((perGrade) => perGrade[state.grade.id] || []);
-      state.questions = pickQuestionsForTrack(allQuestions, trackId, 4);
+      state.questions = shuffle(allQuestions).slice(0, 4);
     }
     state.current = 0;
     state.score = 0;
@@ -283,7 +272,7 @@
     resultSummary.textContent = t("resultSummary", { score: state.score, total: state.questions.length, pct });
     resultMessage.textContent = pct === 100 ? t("resultPerfect") : pct >= 70 ? t("resultGreat") : t("resultRetry");
 
-    const track = buildTrackId();
+    const track = shouldUseTopics() ? `${state.grade.id}__${state.subject.id}__${state.topic}` : `${state.grade.id}__${state.subject.id}`;
     if (pct === 100) {
       sessionStorage.setItem(`rewardUnlocked:${track}`, "true");
       rewardLink.href = `reward.html?track=${encodeURIComponent(track)}`;
@@ -341,41 +330,6 @@
       [clone[i], clone[j]] = [clone[j], clone[i]];
     }
     return clone;
-  }
-
-  function getGradesForDisplay() {
-    const gradeOrder = ["year2", "year3", "year4", "year5", "year6", "year7", "year8", "year9", "year10", "year11", "alevel"];
-    const rank = new Map(gradeOrder.map((id, idx) => [id, idx]));
-    const fallbackRank = Number.MAX_SAFE_INTEGER;
-
-    return curriculum.grades
-      .slice()
-      .sort((a, b) => (rank.has(a.id) ? rank.get(a.id) : fallbackRank) - (rank.has(b.id) ? rank.get(b.id) : fallbackRank));
-  }
-
-  function buildTrackId() {
-    return shouldUseTopics() ? `${state.grade.id}__${state.subject.id}__${state.topic}` : `${state.grade.id}__${state.subject.id}`;
-  }
-
-  function pickQuestionsForTrack(questionPool, trackId, count) {
-    if (!questionPool.length) return [];
-
-    if (!state.questionHistoryByTrack[trackId]) {
-      state.questionHistoryByTrack[trackId] = [];
-    }
-
-    const usedIndices = new Set(state.questionHistoryByTrack[trackId]);
-    let availableIndices = questionPool.map((_, idx) => idx).filter((idx) => !usedIndices.has(idx));
-
-    if (availableIndices.length < count) {
-      state.questionHistoryByTrack[trackId] = [];
-      availableIndices = questionPool.map((_, idx) => idx);
-    }
-
-    const pickedIndices = shuffle(availableIndices).slice(0, Math.min(count, questionPool.length));
-    state.questionHistoryByTrack[trackId].push(...pickedIndices);
-
-    return pickedIndices.map((idx) => questionPool[idx]);
   }
 
 
