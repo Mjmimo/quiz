@@ -373,7 +373,7 @@ function ensureFourQuestions(questions, gradeIndex, gradeLabel, subject, topic) 
   const list = questions.slice(0, 4);
   while (list.length < 4) {
     list.push(q(
-      `[${gradeLabel}] Bonus (${subject}/${topic}) #${list.length + 1}: What is ${gradeIndex + list.length + 2} + ${list.length + 1}?`,
+      `[${gradeLabel}] Bonus (${subject}) #${list.length + 1}: What is ${gradeIndex + list.length + 2} + ${list.length + 1}?`,
       [String(gradeIndex + list.length + 1), String(gradeIndex + list.length + 2), String(gradeIndex + list.length + 3), String(gradeIndex + list.length + 4)],
       2,
       "Add the two numbers."
